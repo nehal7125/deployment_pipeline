@@ -55,8 +55,8 @@ jobs:
             fi
             sudo npm i
             mkdir -p logs
-            pm2 stop 0 || pm2 stop ${{ secrets.PM2_APP_ID }} || true
-            pm2 delete 0 || pm2 delete ${{ secrets.PM2_APP_ID }} || true
-            pm2 start ecosystem.config.js
+            pm2 stop my-react-dev || pm2 stop 0 || pm2 stop ${{ secrets.PM2_APP_ID }} || true
+            pm2 delete my-react-dev || pm2 delete 0 || pm2 delete ${{ secrets.PM2_APP_ID }} || true
+            pm2 start ecosystem.config.cjs
             pm2 save
 

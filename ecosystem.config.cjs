@@ -1,6 +1,6 @@
 module.exports = {
   apps: [{
-    name: 'deployment_pipeline',
+    name: 'my-react-dev',
     script: 'npm',
     args: 'run dev',
     cwd: './',
