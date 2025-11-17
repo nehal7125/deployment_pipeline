@@ -29,14 +29,43 @@ jobs:
             echo "https://${{ secrets.GIT_USERNAME }}:${{ secrets.GIT_TOKEN }}@github.com" > ~/.git-credentials
             chmod 600 ~/.git-credentials
             
-            # Set the remote repository URL to ensure we pull from the correct repo
-            git remote set-url origin https://${{ secrets.GIT_USERNAME }}:${{ secrets.GIT_TOKEN }}@github.com/${{ github.repository }}.git
+            # Repository URL with credentials
+            REPO_URL="https://${{ secrets.GIT_USERNAME }}:${{ secrets.GIT_TOKEN }}@github.com/${{ github.repository }}.git"
             
-            # Git pull from the correct repository
-            git pull origin main
+            # Check if directory is a git repository
+            if [ ! -d .git ]; then
+              # If not a git repo, check if directory is empty or has files
+              if [ -z "$(ls -A)" ]; then
+                # Directory is empty, clone the repository
+                cd ..
+                rm -rf $(basename ${{ secrets.EC2_PROJECT_PATH }})
+                git clone $REPO_URL $(basename ${{ secrets.EC2_PROJECT_PATH }})
+                cd $(basename ${{ secrets.EC2_PROJECT_PATH }})
+              else
+                # Directory has files but is not a git repo, initialize it
+                git init
+                git remote add origin $REPO_URL
+                git fetch origin
+                git branch -M main
+                git reset --hard origin/main
+              fi
+            else
+              # It's a git repository, check if origin remote exists
+              if ! git remote | grep -q "^origin$"; then
+                # Origin doesn't exist, add it
+                git remote add origin $REPO_URL
+              else
+                # Origin exists, update the URL
+                git remote set-url origin $REPO_URL
+              fi
+              
+              # Fetch and pull from the correct repository
+              git fetch origin
+              git pull origin main
+            fi
             
             # Install/update dependencies
-            npm i
+            sudo npm i
             
             pm2 stop ${{ secrets.PM2_APP_ID }}
             pm2 start ${{ secrets.PM2_APP_ID }}
