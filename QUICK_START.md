@@ -2,7 +2,7 @@
 
 ## Step 1: Generate SSH Key (2 minutes)
 
-On your local machine or EC2:
+
 
 ```bash
 ssh-keygen -t rsa -b 4096 -C "github-actions" -f ~/.ssh/github_actions_deploy
