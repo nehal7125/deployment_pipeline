@@ -61,13 +61,30 @@ jobs:
               
               # Fetch and pull from the correct repository
               git fetch origin
-              git pull origin main
+              
+              # Stash any local changes and remove untracked files that might conflict
+              git stash || true
+              git clean -fd || true
+              
+              # Reset to match remote exactly (handles merge conflicts)
+              git reset --hard origin/main
             fi
             
             # Install/update dependencies
             sudo npm i
             
-            pm2 stop ${{ secrets.PM2_APP_ID }}
-            pm2 start ${{ secrets.PM2_APP_ID }}
+            # Create logs directory if it doesn't exist
+            mkdir -p logs
+            
+            # Stop PM2 process if running
+            pm2 stop deployment_pipeline || pm2 stop ${{ secrets.PM2_APP_ID }} || true
+            
+            # Delete old process if exists
+            pm2 delete deployment_pipeline || pm2 delete ${{ secrets.PM2_APP_ID }} || true
+            
+            # Start PM2 using ecosystem.config.js
+            pm2 start ecosystem.config.js
+            
+            # Save PM2 process list
             pm2 save
 
