@@ -29,7 +29,10 @@ jobs:
             echo "https://${{ secrets.GIT_USERNAME }}:${{ secrets.GIT_TOKEN }}@github.com" > ~/.git-credentials
             chmod 600 ~/.git-credentials
             
-            # Git pull will automatically use stored credentials if it asks for username/password
+            # Set the remote repository URL to ensure we pull from the correct repo
+            git remote set-url origin https://${{ secrets.GIT_USERNAME }}:${{ secrets.GIT_TOKEN }}@github.com/${{ github.repository }}.git
+            
+            # Git pull from the correct repository
             git pull origin main
             
             # Install/update dependencies
