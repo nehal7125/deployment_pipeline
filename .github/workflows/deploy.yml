@@ -67,6 +67,7 @@ jobs:
               git clean -fd || true
               
               # Reset to match remote exactly (handles merge conflicts)
+              git branch --show-current
               git reset --hard origin/main
             fi
             
