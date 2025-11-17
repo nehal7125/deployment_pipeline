@@ -1,0 +1,55 @@
+name: Deploy to EC2 (Advanced)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy to EC2 Ubuntu
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_PORT || 22 }}
+          script: |
+            set -e  # Exit on error
+            
+            # Navigate to project directory
+            cd ${{ secrets.EC2_PROJECT_PATH }}
+            
+            # Pull latest changes
+            echo "Pulling latest changes from main branch..."
+            git pull origin main
+            
+            # Install dependencies if package.json exists (optional)
+            if [ -f "package.json" ]; then
+              echo "Installing dependencies..."
+              npm install --production
+            fi
+            
+            # Stop PM2 process
+            echo "Stopping PM2 process: ${{ secrets.PM2_APP_ID }}"
+            pm2 stop ${{ secrets.PM2_APP_ID }} || true
+            
+            # Start PM2 process
+            echo "Starting PM2 process: ${{ secrets.PM2_APP_ID }}"
+            pm2 start ${{ secrets.PM2_APP_ID }}
+            
+            # Save PM2 process list
+            pm2 save
+            
+            # Show PM2 status
+            pm2 status
+            
+            echo "Deployment completed successfully!"
+
