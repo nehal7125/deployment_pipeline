@@ -32,6 +32,9 @@ jobs:
             # Git pull will automatically use stored credentials if it asks for username/password
             git pull origin main
             
+            # Install/update dependencies
+            npm i
+            
             pm2 stop ${{ secrets.PM2_APP_ID }}
             pm2 start ${{ secrets.PM2_APP_ID }}
             pm2 save
