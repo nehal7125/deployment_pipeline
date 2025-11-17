@@ -23,7 +23,15 @@ jobs:
           port: ${{ secrets.EC2_PORT || 22 }}
           script: |
             cd ${{ secrets.EC2_PROJECT_PATH }}
+            
+            # Set up git credential helper to automatically provide username and token when git asks
+            git config --global credential.helper store
+            echo "https://${{ secrets.GIT_USERNAME }}:${{ secrets.GIT_TOKEN }}@github.com" > ~/.git-credentials
+            chmod 600 ~/.git-credentials
+            
+            # Git pull will automatically use stored credentials if it asks for username/password
             git pull origin main
+            
             pm2 stop ${{ secrets.PM2_APP_ID }}
             pm2 start ${{ secrets.PM2_APP_ID }}
             pm2 save
