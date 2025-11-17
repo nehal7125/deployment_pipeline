@@ -23,20 +23,12 @@ jobs:
           port: ${{ secrets.EC2_PORT || 22 }}
           script: |
             cd ${{ secrets.EC2_PROJECT_PATH }}
-            
-            # Set up git credential helper to automatically provide username and token when git asks
             git config --global credential.helper store
             echo "https://${{ secrets.GIT_USERNAME }}:${{ secrets.GIT_TOKEN }}@github.com" > ~/.git-credentials
             chmod 600 ~/.git-credentials
-            
-            # Repository URL with credentials
             REPO_URL="https://${{ secrets.GIT_USERNAME }}:${{ secrets.GIT_TOKEN }}@github.com/${{ github.repository }}.git"
-            
-            # Check if directory is a git repository
             if [ ! -d .git ]; then
-              # If not a git repo, check if directory is empty or has files
               if [ -z "$(ls -A)" ]; then
-                # Directory is empty, clone the repository
                 cd ..
                 rm -rf $(basename ${{ secrets.EC2_PROJECT_PATH }})
                 git clone $REPO_URL $(basename ${{ secrets.EC2_PROJECT_PATH }})
@@ -50,42 +42,21 @@ jobs:
                 git reset --hard origin/main
               fi
             else
-              # It's a git repository, check if origin remote exists
               if ! git remote | grep -q "^origin$"; then
-                # Origin doesn't exist, add it
                 git remote add origin $REPO_URL
               else
-                # Origin exists, update the URL
                 git remote set-url origin $REPO_URL
               fi
-              
-              # Fetch and pull from the correct repository
               git fetch origin
-              
-              # Stash any local changes and remove untracked files that might conflict
               git stash || true
               git clean -fd || true
-              
-              # Reset to match remote exactly (handles merge conflicts)
               git branch --show-current
               git reset --hard origin/main
             fi
-            
-            # Install/update dependencies
             sudo npm i
-            
-            # Create logs directory if it doesn't exist
             mkdir -p logs
-            
-            # Stop PM2 process if running
-            pm2 stop deployment_pipeline || pm2 stop ${{ secrets.PM2_APP_ID }} || true
-            
-            # Delete old process if exists
-            pm2 delete deployment_pipeline || pm2 delete ${{ secrets.PM2_APP_ID }} || true
-            
-            # Start PM2 using ecosystem.config.js
+            pm2 stop 0 || pm2 stop ${{ secrets.PM2_APP_ID }} || true
+            pm2 delete 0 || pm2 delete ${{ secrets.PM2_APP_ID }} || true
             pm2 start ecosystem.config.js
-            
-            # Save PM2 process list
             pm2 save
 
